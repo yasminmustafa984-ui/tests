@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار الترويح عن النفس - شامل</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --bg: #f8f9fa;
+            --correct: #d4edda;
+            --correct-border: #c3e6cb;
+            --wrong: #fff3cd;
+            --wrong-border: #ffeeba;
+            --text: #333;
+            --card-bg: #fff;
+        }
+        body {
+            font-family: 'Tajawal', sans-serif; background-color: var(--bg); color: var(--text);
+            margin: 0; padding: 20px; display: flex; justify-content: center;
+        }
+        .quiz-container {
+            background-color: var(--card-bg); border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            width: 100%; max-width: 900px; padding: 40px; box-sizing: border-box;
+        }
+        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid var(--secondary); padding-bottom: 20px;}
+        .ru-text { font-size: 0.85em; color: #7f8c8d; margin-top: 5px; direction: ltr; }
+        
+        .section-title { font-size: 1.4em; color: var(--primary); margin-bottom: 20px; font-weight: bold; background: #e8f4f8; padding: 10px 15px; border-radius: 8px;}
+        
+        .reading-box {
+            background-color: #fffaf0; border-right: 5px solid #f39c12; padding: 20px;
+            border-radius: 8px; margin-bottom: 30px; line-height: 1.9; font-size: 1.1em;
+        }
+        
+        .question-card { margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px dashed #eee; }
+        .question-text { font-size: 1.15em; font-weight: bold; margin-bottom: 15px; }
+        
+        .options-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+        .option-btn {
+            background-color: #fcfcfc; border: 2px solid #e0e0e0; padding: 12px; border-radius: 8px;
+            font-family: inherit; font-size: 1em; cursor: pointer; transition: 0.2s; text-align: right;
+        }
+        .option-btn:hover:not(:disabled) { border-color: var(--secondary); background-color: #f0f8ff;}
+        .correct { background-color: var(--correct) !important; border-color: var(--correct-border) !important; color: #155724; }
+        .wrong { background-color: var(--wrong) !important; border-color: var(--wrong-border) !important; color: #856404; }
+        
+        select.fill-select {
+            font-family: inherit; font-size: 1em; padding: 6px 12px; border-radius: 5px; margin: 0 5px;
+            border: 2px solid var(--secondary); cursor: pointer; background: #fff;
+        }
+        
+        .order-area { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
+        .word-btn { padding: 8px 16px; background: var(--secondary); color: white; border: none; border-radius: 5px; cursor: pointer; font-family: inherit; font-size: 1em;}
+        .drop-box { min-height: 50px; border: 2px dashed #bdc3c7; border-radius: 8px; padding: 10px; display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; background: #fafafa;}
+        .check-btn { padding: 8px 20px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; font-family: inherit; }
+
+        .textarea-box { width: 100%; height: 80px; padding: 12px; font-family: inherit; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; resize: vertical; font-size: 1em;}
+        
+        .nav-buttons { display: flex; justify-content: space-between; margin-top: 40px; align-items: center; }
+        .nav-btn {
+            padding: 12px 30px; border: none; border-radius: 8px; background-color: var(--primary);
+            color: white; font-family: inherit; cursor: pointer; font-size: 1.1em; font-weight: bold; transition: 0.3s;
+        }
+        .nav-btn:hover { background-color: #1a252f; }
+        .nav-btn:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+        #progress { font-weight: bold; color: #7f8c8d; }
+        .result-box { text-align: center; padding: 50px 20px; display: none; }
+        .result-score { font-size: 3em; color: var(--secondary); font-weight: bold; margin: 20px 0;}
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div class="header" id="header">
+        <h2>اِخْتِبَارُ كَفَاءَةِ اللُّغَةِ الْعَرَبِيَّةِ: التَّرْوِيحُ عَنِ النَّفْسِ</h2>
+        <div class="ru-text">Тест на знание арабского языка: Отдых и развлечения (Уровень A2)</div>
+    </div>
+
+    <div id="sectionContainer"></div>
+
+    <div class="nav-buttons" id="navArea">
+        <button class="nav-btn" id="prevBtn" onclick="navigate(-1)">الْقِسْمُ السَّابِقُ</button>
+        <span id="progress">الْقِسْمُ 1 مِنْ 7</span>
+        <button class="nav-btn" id="nextBtn" onclick="navigate(1)">الْقِسْمُ التَّالِي</button>
+    </div>
+    
+    <div class="result-box" id="resultBox"></div>
+</div>
+
+<script>
+    // Data Structure
+    const storyText = `
+        <strong>اقْرَئِي الْفِقْرَةَ التَّالِيَةَ جَيِّدًا، ثُمَّ أَجِيبِي عَنِ الْأَسْئِلَةِ:</strong><br><br>
+        طَارِقٌ شَابٌّ نَشِيطٌ يَعْمَلُ مُبَرْمِجًا فِي شَرِكَةِ حَاسُوبٍ كَبِيرَةٍ فِي الْمَدِينَةِ. هُوَ يُحِبُّ عَمَلَهُ كَثِيرًا، لَكِنَّهُ يَقْضِي أَكْثَرَ مِنْ عَشْرِ سَاعَاتٍ يَوْمِيًّا أَمَامَ الشَّاشَةِ. بَعْدَ شُهُورٍ مِنْ ضُغُوطِ الْعَمَلِ، شَعَرَ طَارِقٌ بِتَعَبٍ شَدِيدٍ وَمَلَلٍ، وَأَصْبَحَ جِسْمُهُ ضَعِيفًا. ذَهَبَ طَارِقٌ إِلَى الطَّبِيبِ. فَحَصَهُ الطَّبِيبُ وَكَتَبَ لَهُ التَّقْرِيرَ الطِّبِّيَّ قَائِلًا: "أَنْتَ لَسْتَ مَرِيضًا، جِسْمُكَ سَلِيمٌ، وَلَكِنَّكَ تَحْتَاجُ إِلَى التَّرْوِيحِ عَنِ النَّفْسِ، اِبْتَعِدْ عَنِ الْحَاسُوبِ وَالْمَدِينَةِ الْمُزْدَحِمَةِ".<br><br>
+        فِي عُطْلَةِ نِهَايَةِ الْأُسْبُوعِ، قَرَّرَ طَارِقٌ أَنْ يُغَيِّرَ حَيَاتَهُ. حَجَزَ تَذْكِرَةَ قِطَارٍ وَسَافَرَ إِلَى غَابَةٍ جَمِيلَةٍ بِجِوَارِ بُحَيْرَةٍ هَادِئَةٍ. هُنَاكَ، نَصَبَ طَارِقٌ خَيْمَتَهُ الصَّغِيرَةَ بَيْنَ الْأَشْجَارِ. فِي الصَّبَاحِ الْبَاكِرِ، كَانَ يَسْتَنْشِقُ الْهَوَاءَ النَّقِيَّ وَيَتَجَوَّلُ فِي الْغَابَةِ لِيَلْتَقِطَ صُوَرًا لِلْحَيَوَانَاتِ الْبَرِّيَّةِ. وَفِي الْمَسَاءِ، كَانَ يَجْلِسُ عَلَى الشَّاطِئِ لِيَصْطَادَ السَّمَكَ وَيَقْرَأَ قِصَّةً مُسَلِّيَةً. عَادَ طَارِقٌ إِلَى عَمَلِهِ بَعْدَ الْإِجَازَةِ نَشِيطًا وَسَعِيدًا، وَأَدْرَكَ أَنَّ الْحَيَاةَ لَيْسَتْ عَمَلًا فَقَطْ، بَلْ يَجِبُ قَضَاءُ وَقْتٍ مُمْتِعٍ لِلْحِفَاظِ عَلَى الصِّحَّةِ.
+    `;
+
+    const sectionsData = [
+        {
+            title: "الْقِسْمُ الْأَوَّلُ: الْقِرَاءَةُ وَالِاسْتِيعَابُ",
+            hasPassage: true,
+            questions: [
+                // 10 MCQ
+                { type: 1, q: "مَا هُوَ عَمَلُ طَارِقٍ؟", opts: ["طَبِيبٌ فِي مُسْتَشْفَى", "مُبَرْمِجٌ فِي شَرِكَةِ حَاسُوبٍ", "سَائِقُ قِطَارٍ"], ans: 1 },
+                { type: 1, q: "كَمْ سَاعَةً يَقْضِيهَا طَارِقٌ أَمَامَ الشَّاشَةِ تَقْرِيبًا؟", opts: ["أَقَلَّ مِنْ خَمْسِ سَاعَاتٍ", "أَكْثَرَ مِنْ عَشْرِ سَاعَاتٍ", "سَاعَتَيْنِ فَقَطْ"], ans: 1 },
+                { type: 1, q: "لِمَاذَا ذَهَبَ طَارِقٌ إِلَى الطَّبِيبِ؟", opts: ["لِأَنَّهُ شَعَرَ بِتَعَبٍ وَمَلَلٍ", "لِيَأْخُذَ دَوَاءً لِلزُّكَامِ", "لِأَنَّهُ يُرِيدُ السَّفَرَ"], ans: 0 },
+                { type: 1, q: "مَاذَا قَالَ الطَّبِيبُ لِطَارِقٍ؟", opts: ["أَنْتَ مَرِيضٌ جِدًّا", "جِسْمُكَ سَلِيمٌ وَتَحْتَاجُ لِلتَّرْوِيحِ", "يَجِبُ أَنْ تَعْمَلَ أَكْثَرَ"], ans: 1 },
+                { type: 1, q: "كَيْفَ سَافَرَ طَارِقٌ إِلَى الْغَابَةِ؟", opts: ["بِالطَّائِرَةِ", "بِالسَّيَّارَةِ", "بِالْقِطَارِ"], ans: 2 },
+                { type: 1, q: "أَيْنَ نَصَبَ طَارِقٌ خَيْمَتَهُ؟", opts: ["فِي الْمَدِينَةِ الْمُزْدَحِمَةِ", "بَيْنَ الْأَشْجَارِ بِالْغَابَةِ", "عَلَى قِمَّةِ الْجَبَلِ"], ans: 1 },
+                { type: 1, q: "مَاذَا كَانَ يَفْعَلُ طَارِقٌ فِي الصَّبَاحِ الْبَاكِرِ؟", opts: ["يَنَامُ دَاخِلَ الْخَيْمَةِ", "يَلْتَقِطُ صُوَرًا وَيَتَجَوَّلُ", "يَسْبَحُ فِي الْبَحْرِ المَالِحِ"], ans: 1 },
+                { type: 1, q: "مَتَى كَانَ طَارِقٌ يَصْطَادُ السَّمَكَ؟", opts: ["فِي الْمَسَاءِ", "فِي الصَّبَاحِ", "فِي وَقْتِ الْعَمَلِ"], ans: 0 },
+                { type: 1, q: "بِمَاذَا شَعَرَ طَارِقٌ بَعْدَ الْعُطْلَةِ؟", opts: ["بِالْمَلَلِ الشَّدِيدِ", "بِالضَّعْفِ وَالْمَرَضِ", "أَصْبَحَ نَشِيطًا وَسَعِيدًا"], ans: 2 },
+                { type: 1, q: "مَاذَا أَدْرَكَ طَارِقٌ فِي النِّهَايَةِ؟", opts: ["أَنَّ الْحَيَاةَ عَمَلٌ فَقَطْ", "أَنَّ الصِّحَّةَ تَحْتَاجُ إِلَى وَقْتٍ مُمْتِعٍ", "أَنَّ الْحَاسُوبَ هُوَ كُلُّ شَيْءٍ"], ans: 1 },
+                // 10 T/F
+                { type: 2, q: "عَمَلُ طَارِقٍ فِيهِ ضُغُوطٌ كَثِيرَةٌ.", ans: 1 },
+                { type: 2, q: "كَانَ طَارِقٌ يَعِيشُ فِي قَرْيَةٍ هَادِئَةٍ قَبْلَ عُطْلَتِهِ.", ans: 0 },
+                { type: 2, q: "الطَّبِيبُ أَعْطَى طَارِقًا أَدْوِيَةً كَثِيرَةً لِيَشْرَبَهَا.", ans: 0 },
+                { type: 2, q: "نَصَحَ الطَّبِيبُ طَارِقًا بِالِابْتِعَادِ عَنِ الْمَدِينَةِ الْمُزْدَحِمَةِ.", ans: 1 },
+                { type: 2, q: "اشْتَرَى طَارِقٌ تَذْكِرَةَ قِطَارٍ لِلسَّفَرِ.", ans: 1 },
+                { type: 2, q: "سَافَرَ طَارِقٌ مَعَ جَمِيعِ أَصْدِقَائِهِ فِي الشَّرِكَةِ.", ans: 0 },
+                { type: 2, q: "التِّقَاطُ الصُّوَرِ لِلْحَيَوَانَاتِ مِنَ الْأَنْشِطَةِ الَّتِي مَارَسَهَا طَارِقٌ.", ans: 1 },
+                { type: 2, q: "طَارِقٌ كَانَ يَقْرَأُ كُتُبَ الْحَاسُوبِ فِي الْغَابَةِ.", ans: 0 },
+                { type: 2, q: "صَيْدُ السَّمَكِ يُعْتَبَرُ مِنْ أَنْوَاعِ التَّرْوِيحِ عَنِ النَّفْسِ.", ans: 1 },
+                { type: 2, q: "الرَّاحَةُ تُفِيدُ جِسْمَ الْإِنْسَانِ وَعَقْلَهُ.", ans: 1 }
+            ]
+        },
+        {
+            title: "الْقِسْمُ الثَّانِي: اخْتِيَارٌ مِنْ مُتَعَدِّدٍ - الْمُفْرَدَاتُ وَالتَّعْبِيرَاتُ",
+            hasPassage: false,
+            questions: [
+                { type: 1, q: "فِي عُطْلَةِ الصَّيْفِ، نُفَضِّلُ الذَّهَابَ إِلَى _____ لِلسِّبَاحَةِ.", opts: ["الْمَتْحَفِ", "الشَّاطِئِ", "الْمَسْرَحِ"], ans: 1 },
+                { type: 1, q: "النَّاسُ الَّذِينَ يَعْمَلُونَ كَثِيرًا، يَشْعُرُونَ بِـ _____.", opts: ["الرَّاحَةِ", "النَّشَاطِ", "التَّعَبِ"], ans: 2 },
+                { type: 1, q: "_____ نَقِيٌّ جِدًّا فِي الطَّبِيعَةِ وَالْجِبَالِ.", opts: ["الْهَوَاءُ", "الْحَاسُوبُ", "الْمَلْعَبُ"], ans: 0 },
+                { type: 1, q: "هِيَ تَحْتَاجُ إِلَى شِرَاءِ _____ لِتُسَافِرَ بِالطَّائِرَةِ.", opts: ["خَيْمَةٍ", "تَذْكِرَةٍ", "صُورَةٍ"], ans: 1 },
+                { type: 1, q: "نَحْنُ _____ الْخِيَامَ فِي الْمُخَيَّمِ الْبَرِّيِّ.", opts: ["نَنْصَبُ", "نَصْطَادُ", "نَقْرَأُ"], ans: 0 },
+                { type: 1, q: "_____ عَنِ النَّفْسِ يُعِيدُ لِلْإِنْسَانِ حَيَوِيَّتَهُ.", opts: ["الِابْتِعَادُ", "التَّرْوِيحُ", "الْمَلَلُ"], ans: 1 },
+                { type: 1, q: "يَذْهَبُ السُّيَّاحُ إِلَى _____ لِمُشَاهَدَةِ الْآثَارِ الْقَدِيمَةِ.", opts: ["الْمَتْحَفِ", "الْبَحْرِ", "الْمَطْعَمِ"], ans: 0 },
+                { type: 1, q: "الشَّخْصُ _____ هُوَ الَّذِي لَا يُحِبُّ الْحَرَكَةَ أَوِ الْعَمَلَ.", opts: ["النَّشِيطُ", "الْكَسُولُ", "الْقَوِيُّ"], ans: 1 },
+                { type: 1, q: "رُكُوبُ _____ رِيَاضَةٌ تُعَلِّمُ الْإِنْسَانَ الشَّجَاعَةَ.", opts: ["الْخَيْلِ", "الْقِصَّةِ", "الْمَلْعَبِ"], ans: 0 },
+                { type: 1, q: "مِنْ هِوَايَاتِي الْمُفَضَّلَةِ _____ صُوَرٍ لِلْمَنَاظِرِ الطَّبِيعِيَّةِ.", opts: ["الْتِقَاطُ", "ضَرْبُ", "صَيْدُ"], ans: 0 },
+                { type: 1, q: "لَا تَقْضِ يَوْمَكَ كُلَّهُ فِي مَكَانٍ _____ بِالضَّوْضَاءِ.", opts: ["هَادِئٍ", "مُزْدَحِمٍ", "مُسَلٍّ"], ans: 1 },
+                { type: 1, q: "الْإِسْلَامُ يَدْعُو إِلَى الْحِفَاظِ عَلَى _____ الْجِسْمِ.", opts: ["صِحَّةِ", "مَرَضِ", "تَعَبِ"], ans: 0 },
+                { type: 1, q: "قَضَيْنَا وَقْتًا _____ فِي مُشَاهَدَةِ الْمَسْرَحِيَّةِ.", opts: ["مُتْعَبًا", "مُمْتِعًا", "حَزِينًا"], ans: 1 },
+                { type: 1, q: "مُمَارَسَةُ _____ الْمَشْيِ تُفِيدُ الْقَلْبَ كَثِيرًا.", opts: ["رِيَاضَةِ", "هِوَايَةِ", "تَقْرِيرِ"], ans: 0 },
+                { type: 1, q: "_____ الطَّبِيبُ الْمَرِيضَ لِيَعْرِفَ سَبَبَ الْأَلَمِ.", opts: ["عَالَجَ", "فَحَصَ", "رَسَمَ"], ans: 1 }
+            ]
+        },
+        {
+            title: "الْقِسْمُ الثَّالِثُ: صَحْ أَمْ خَطَأ - مَفَاهِيمُ التَّرْوِيحِ",
+            hasPassage: false,
+            questions: [
+                { type: 2, q: "الْهَدَفُ مِنَ التَّرْوِيحِ عَنِ النَّفْسِ هُوَ قَتْلُ الْوَقْتِ فِي أُمُورٍ سَيِّئَةٍ.", ans: 0 },
+                { type: 2, q: "الْقِرَاءَةُ لَهَا فَائِدَةٌ عَظِيمَةٌ لِلْعَقْلِ وَالْمَعْرِفَةِ.", ans: 1 },
+                { type: 2, q: "الْعَامِلُ الَّذِي يَعْمَلُ بِجِدٍّ لَا يَحْتَاجُ أَبَدًا إِلَى إِجَازَةٍ.", ans: 0 },
+                { type: 2, q: "الْمُؤْمِنُ الْقَوِيُّ خَيْرٌ وَأَحَبُّ إِلَى اللَّهِ مِنَ الْمُؤْمِنِ الضَّعِيفِ.", ans: 1 },
+                { type: 2, q: "تُعْتَبَرُ السِّبَاحَةُ مِنْ أَهَمِّ الرِّيَاضَاتِ الْمُفِيدَةِ لِلْجِسْمِ.", ans: 1 },
+                { type: 2, q: "مِنَ الصِّحِّيِّ أَنْ يَتَنَاوَلَ الْإِنْسَانُ طَعَامًا ثَقِيلًا ثُمَّ يَجْرِيَ مُبَاشَرَةً.", ans: 0 },
+                { type: 2, q: "زِيَارَةُ الْمَتَاحِفِ تُعَرِّفُ السَّائِحَ عَلَى تَارِيخِ الْبِلَادِ.", ans: 1 },
+                { type: 2, q: "الْجُلُوسُ أَمَامَ الْحَاسُوبِ لِمُدَّةِ ١٥ سَاعَةً يَوْمِيًّا نَشَاطٌ مُفِيدٌ لِلْعَيْنِ.", ans: 0 },
+                { type: 2, q: "رُكُوبُ الْخَيْلِ هِوَايَةٌ قَدِيمَةٌ عِنْدَ الْعَرَبِ.", ans: 1 },
+                { type: 2, q: "الْمُخَيَّمَاتُ تَكُونُ عَادَةً دَاخِلَ الْأَسْوَاقِ التِّجَارِيَّةِ الْمُغْلَقَةِ.", ans: 0 },
+                { type: 2, q: "يُمْكِنُ قَضَاءُ وَقْتِ الْفَرَاغِ فِي مُسَاعَدَةِ النَّاسِ.", ans: 1 },
+                { type: 2, q: "الِاسْتِرَاحَةُ بَعْدَ الْعَمَلِ تُسَاعِدُ عَلَى تَجْدِيدِ الطَّاقَةِ.", ans: 1 },
+                { type: 2, q: "مُشَاهَدَةُ بَرَامِجِ التِّلْفَازِ غَيْرِ الْمُفِيدَةِ طَوَالَ الْيَوْمِ أَمْرٌ جَيِّدٌ.", ans: 0 },
+                { type: 2, q: "يُفَضِّلُ بَعْضُ النَّاسِ قَضَاءَ الْعُطْلَةِ فِي رِحْلَةٍ لِصَيْدِ السَّمَكِ.", ans: 1 },
+                { type: 2, q: "الشُّعُورُ بِالْمَلَلِ الدَّائِمِ دَلِيلٌ عَلَى أَنَّ الشَّخْصَ يَقْضِي وَقْتَهُ فِي مَشَاغِلَ مُفِيدَةٍ.", ans: 0 }
+            ]
+        },
+        {
+            title: "الْقِسْمُ الرَّابِعُ: الْمُفْرَدُ، الْجَمْعُ، وَالْمُضَادُّ",
+            hasPassage: false,
+            questions: [
+                { type: 1, q: "مُضَادُّ كَلِمَةِ (نَشِيطٌ):", opts: ["قَوِيٌّ", "كَسُولٌ", "مَرِيضٌ"], ans: 1 },
+                { type: 1, q: "جَمْعُ كَلِمَةِ (طَبِيبٌ):", opts: ["طِبٌّ", "طَبِيبَاتٌ", "أَطِبَّاءُ"], ans: 2 },
+                { type: 1, q: "مُفْرَدُ كَلِمَةِ (خِيَامٌ):", opts: ["خَيْمَةٌ", "خَامٌّ", "مُخَيَّمٌ"], ans: 0 },
+                { type: 1, q: "مُضَادُّ كَلِمَةِ (مُفِيدٌ):", opts: ["مُسَلٍّ", "مُضِرٌّ", "صِحِّيٌّ"], ans: 1 },
+                { type: 1, q: "جَمْعُ كَلِمَةِ (صُورَةٌ):", opts: ["صِوَرٌ", "صُوَرٌ", "أَصْوَارٌ"], ans: 1 },
+                { type: 1, q: "مُفْرَدُ كَلِمَةِ (أَصْدِقَاءُ):", opts: ["صِدْقٌ", "صَدِيقٌ", "صَادِقٌ"], ans: 1 },
+                { type: 1, q: "مُضَادُّ كَلِمَةِ (ضَعِيفٌ):", opts: ["نَحِيفٌ", "مَرِيضٌ", "قَوِيٌّ"], ans: 2 },
+                { type: 1, q: "جَمْعُ كَلِمَةِ (وَقْتٌ):", opts: ["مُوَاقِيتُ", "أَوْقَاتٌ", "تَوْقِيتٌ"], ans: 1 },
+                { type: 1, q: "مُضَادُّ كَلِمَةِ (هَادِئٌ):", opts: ["مُزْدَحِمٌ / صَاخِبٌ", "بَعِيدٌ", "جَمِيلٌ"], ans: 0 },
+                { type: 1, q: "مُفْرَدُ كَلِمَةِ (مَتَاحِفُ):", opts: ["تُحْفَةٌ", "مَتْحَفٌ", "تَحَافٌ"], ans: 1 },
+                { type: 1, q: "جَمْعُ كَلِمَةِ (غَابَةٌ):", opts: ["غَابَاتٌ", "غِيَابٌ", "أَغْيَابٌ"], ans: 0 },
+                { type: 1, q: "مُضَادُّ كَلِمَةِ (كَبِيرَةٌ):", opts: ["طَوِيلَةٌ", "قَصِيرَةٌ", "صَغِيرَةٌ"], ans: 2 },
+                { type: 1, q: "مُفْرَدُ كَلِمَةِ (أَيَّامٌ):", opts: ["يَوْمٌ", "يَامٌ", "أَيْمٌ"], ans: 0 },
+                { type: 1, q: "جَمْعُ كَلِمَةِ (عُطْلَةٌ):", opts: ["عَاطِلُونَ", "عُطَلٌ", "عُطُلاتٌ"], ans: 1 },
+                { type: 1, q: "مُضَادُّ كَلِمَةِ (سَعِيدٌ):", opts: ["حَزِينٌ", "نَشِيطٌ", "صَحِيحٌ"], ans: 0 }
+            ]
+        },
+        {
+            title: "الْقِسْمُ الْخَامِسُ: اِمْلَأِ الْفَرَاغَ بِالْكَلِمَةِ الْمُنَاسِبَةِ",
+            hasPassage: false,
+            fillWords: ["الرَّاحَةِ", "صِحَّتِهِ", "الْمَتْحَفِ", "خَيْمَةً", "نَقِيٌّ", "يَسْتَرِيحُ", "هِوَايَةٌ", "مَلَلٍ", "تَذْكِرَةً", "أُسْرَتِهِ", "السَّمَكِ", "تَرْوِيحٌ", "الْبَحْرِ", "مُفِيدٌ", "تُسَافِرُ"],
+            questions: [
+                { type: 3, q: "يَذْهَبُ الصَّيَّادُ إِلَى الشَّاطِئِ لِيَصْطَادَ _____.", ans: 10 },
+                { type: 3, q: "قِرَاءَةُ الْكُتُبِ _____ عَمَلٌ يُغَذِّي الْعَقْلَ.", ans: 13 },
+                { type: 3, q: "لَا بُدَّ مِنَ الْحِفَاظِ عَلَى _____ الْإِنْسَانِ بِمُمَارَسَةِ الرِّيَاضَةِ.", ans: 1 },
+                { type: 3, q: "قَضَى الرَّجُلُ عُطْلَتَهُ الصَّيْفِيَّةَ مَعَ _____ فِي الْجَبَلِ.", ans: 9 },
+                { type: 3, q: "أَحَبُّ _____ إِلَى قَلْبِي هِيَ الرَّسْمُ.", ans: 6 },
+                { type: 3, q: "هَلْ سَوْفَ _____ إِلَى مَكَّةَ لِأَدَاءِ الْعُمْرَةِ؟", ans: 14 },
+                { type: 3, q: "نَصَبَ الْكِشَّافَةُ _____ كَبِيرَةً لِيَنَامُوا فِيهَا.", ans: 3 },
+                { type: 3, q: "يَحْتَاجُ الْعَامِلُ إِلَى _____ بَعْدَ يَوْمٍ شَاقٍّ.", ans: 0 },
+                { type: 3, q: "شَاهَدْنَا آثَارًا قَدِيمَةً جِدًّا حِينَ زُرْنَا _____ الْوَطَنِيَّ.", ans: 2 },
+                { type: 3, q: "اشْتَرَيْتُ _____ قِطَارٍ لِلْعَوْدَةِ إِلَى قَرْيَتِي.", ans: 8 },
+                { type: 3, q: "فِي الْقَرْيَةِ، الْهَوَاءُ _____ وَالْحَيَاةُ هَادِئَةٌ.", ans: 4 },
+                { type: 3, q: "الْمُوَظَّفُ يَشْعُرُ بِـ _____ حِينَ لَا يُوجَدُ شَيْءٌ يَفْعَلُهُ.", ans: 7 },
+                { type: 3, q: "الْمَرِيضُ _____ عَلَى سَرِيرِهِ بَعْدَ تَنَاوُلِ الدَّوَاءِ.", ans: 5 },
+                { type: 3, q: "الْأَلْعَابُ الرِّيَاضِيَّةُ هِيَ أَبْرَزُ شَكْلٍ مِنْ أَشْكَالِ ה_____.", ans: 11 }, // الترويح
+                { type: 3, q: "مَاءُ _____ مَالِحٌ وَلَا يَصْلُحُ لِلشُّرْبِ.", ans: 12 }
+            ]
+        },
+        {
+            title: "الْقِسْمُ السَّادِسُ: رَتِّبِي الْكَلِمَاتِ لِتُصْبِحَ جُمْلَةً صَحِيحَةً",
+            hasPassage: false,
+            questions: [
+                { type: 4, q: ["الرِّيَاضَةَ", "كُلَّ", "أُمَارِسُ", "يَوْمٍ", "أَنَا"], ans: "أَنَا أُمَارِسُ الرِّيَاضَةَ كُلَّ يَوْمٍ" },
+                { type: 4, q: ["النَّفْسِ", "التَّرْوِيحَ", "يُفَضِّلُ", "عَنِ", "خَالِدٌ"], ans: "يُفَضِّلُ خَالِدٌ التَّرْوِيحَ عَنِ النَّفْسِ" },
+                { type: 4, q: ["الْوَقْتَ", "الْقِرَاءَةُ", "الْمُفِيدَةُ", "تَمْلَأُ"], ans: "الْقِرَاءَةُ الْمُفِيدَةُ تَمْلَأُ الْوَقْتَ" },
+                { type: 4, q: ["مِنَ", "الْعَمَلُ", "يُتْعِبُ", "الْكَثِيرُ", "الْإِنْسَانَ"], ans: "الْعَمَلُ الْكَثِيرُ يُتْعِبُ الْإِنْسَانَ مِنَ" }, // adjusted for logic, better: الْعَمَلُ الْكَثِيرُ يُتْعِبُ الْإِنْسَانَ
+                { type: 4, q: ["وَالِدِي", "صَيْدَ", "يُحِبُّ", "السَّمَكِ"], ans: "وَالِدِي يُحِبُّ صَيْدَ السَّمَكِ" },
+                { type: 4, q: ["الْخِيَامَ", "نَصَبْنَا", "الْبَرِّ", "فِي"], ans: "نَصَبْنَا الْخِيَامَ فِي الْبَرِّ" },
+                { type: 4, q: ["جِدًّا", "لِلْجِسْمِ", "السِّبَاحَةُ", "مُفِيدَةٌ"], ans: "السِّبَاحَةُ مُفِيدَةٌ جِدًّا لِلْجِسْمِ" },
+                { type: 4, q: ["بِالرَّاحَةِ", "نَصَحَ", "الْمَرِيضَ", "الطَّبِيبُ"], ans: "نَصَحَ الطَّبِيبُ الْمَرِيضَ بِالرَّاحَةِ" },
+                { type: 4, q: ["الْبِلَادِ", "خَارِجَ", "صَدِيقِي", "سَافَرَ"], ans: "سَافَرَ صَدِيقِي خَارِجَ الْبِلَادِ" },
+                { type: 4, q: ["الْخَيْلِ", "هِوَايَةٌ", "رُكُوبُ", "مُمْتِعَةٌ"], ans: "رُكُوبُ الْخَيْلِ هِوَايَةٌ مُمْتِعَةٌ" },
+                { type: 4, q: ["مَلَابِسَكَ", "لَا", "الْبَرْدِ", "تُخَفِّفْ", "فِي"], ans: "لَا تُخَفِّفْ مَلَابِسَكَ فِي الْبَرْدِ" },
+                { type: 4, q: ["الْغَابَةِ", "فِي", "الْهَوَاءُ", "نَقِيٌّ"], ans: "الْهَوَاءُ نَقِيٌّ فِي الْغَابَةِ" },
+                { type: 4, q: ["وَقْتَكَ", "لَا", "التِّلْفَازِ", "أَمَامَ", "تَقْتُلْ"], ans: "لَا تَقْتُلْ وَقْتَكَ أَمَامَ التِّلْفَازِ" },
+                { type: 4, q: ["بِتَعَبٍ", "شَعَرْتُ", "الْعَمَلِ", "بَعْدَ"], ans: "شَعَرْتُ بِتَعَبٍ بَعْدَ الْعَمَلِ" },
+                { type: 4, q: ["جَمِيلَةً", "عُطْلَةً", "الْعَامَ", "قَضَيْنَا", "هَذَا"], ans: "قَضَيْنَا عُطْلَةً جَمِيلَةً هَذَا الْعَامَ" }
+            ]
+        },
+        {
+            title: "الْقِسْمُ السَّابِعُ: الْإِنْشَاءُ وَالتَّعْبِيرُ (يُصَحَّحُ يَدَوِيًّا)",
+            hasPassage: false,
+            questions: [
+                { type: 5, q: "اُكْتُبِي جُمْلَةً بِاسْتِخْدَامِ كَلِمَةِ: (مُخَيَّمٌ)" },
+                { type: 5, q: "اُكْتُبِي جُمْلَةً بِاسْتِخْدَامِ كَلِمَةِ: (هِوَايَةٌ)" },
+                { type: 5, q: "اُكْتُبِي جُمْلَةً بِاسْتِخْدَامِ كَلِمَةِ: (غَابَةٌ)" },
+                { type: 5, q: "اُكْتُبِي جُمْلَةً بِاسْتِخْدَامِ كَلِمَةِ: (يُسَافِرُ)" },
+                { type: 5, q: "اُكْتُبِي جُمْلَةً بِاسْتِخْدَامِ كَلِمَةِ: (طَبِيبٌ)" },
+                { type: 5, q: "اُكْتُبِي جُمْلَةً بِاسْتِخْدَامِ كَلِمَةِ: (صِحَّةٌ)" },
+                { type: 5, q: "اُكْتُبِي جُمْلَةً بِاسْتِخْدَامِ كَلِمَةِ: (مَلَلٌ)" },
+                { type: 5, q: "اُكْتُبِي جُمْلَةً بِاسْتِخْدَامِ كَلِمَةِ: (يَبْتَعِدُ)" },
+                { type: 5, q: "اُكْتُبِي جُمْلَةً بِاسْتِخْدَامِ كَلِمَةِ: (تَذْكِرَةٌ)" },
+                { type: 5, q: "اُكْتُبِي جُمْلَةً بِاسْتِخْدَامِ كَلِمَةِ: (شَاطِئٌ)" },
+                { type: 5, q: "اُكْتُبِي جُمْلَةً بِاسْتِخْدَامِ كَلِمَةِ: (مُمْتِعٌ)" },
+                { type: 5, q: "اُكْتُبِي جُمْلَةً بِاسْتِخْدَامِ كَلِمَةِ: (صَيْدٌ)" },
+                { type: 5, q: "اُكْتُبِي جُمْلَةً بِاسْتِخْدَامِ كَلِمَةِ: (عُطْلَةٌ)" },
+                { type: 5, q: "اُكْتُبِي جُمْلَةً بِاسْتِخْدَامِ كَلِمَةِ: (نَشِيطٌ)" },
+                { type: 5, q: "اُكْتُبِي جُمْلَةً بِاسْتِخْدَامِ كَلِمَةِ: (التَّرْوِيحُ)" }
+            ]
+        }
+    ];
+
+    // Initialize state
+    let currentSection = 0;
+    let score = 0;
+    // Store user answers: key = "s{secIdx}_q{qIdx}", value = user choice
+    let userAnswers = {};
+    // Store current working arrays for ordering questions
+    let activeOrders = {};
+
+    function init() {
+        // Fix a small issue in Q4 of ordering
+        sectionsData[2].questions[3].ans = "الْعَمَلُ الْكَثِيرُ يُتْعِبُ الْإِنْسَانَ";
+        sectionsData[2].questions[3].q = ["الْعَمَلُ", "يُتْعِبُ", "الْكَثِيرُ", "الْإِنْسَانَ"];
+        
+        renderSection();
+    }
+
+    function renderSection() {
+        document.getElementById('header').style.display = currentSection === 0 ? 'block' : 'none';
+        
+        if (currentSection >= sectionsData.length) {
+            showFinalResult();
+            return;
+        }
+
+        const sec = sectionsData[currentSection];
+        let html = `<div class="section-title">${sec.title}</div>`;
+
+        if (sec.hasPassage) {
+            html += `<div class="reading-box">${storyText}</div>`;
+        }
+
+        sec.questions.forEach((q, qIdx) => {
+            const answerKey = `s${currentSection}_q${qIdx}`;
+            const uAns = userAnswers[answerKey];
+            
+            html += `<div class="question-card">`;
+            
+            if (q.type === 1 || q.type === 2) {
+                // MCQ or T/F
+                html += `<div class="question-text">${qIdx + 1}. ${q.q}</div>`;
+                html += `<div class="options-grid">`;
+                
+                let opts = q.type === 1 ? q.opts : ["خَطَأ (Неправильно)", "صَحِيح (Правильно)"];
+                opts.forEach((opt, optIdx) => {
+                    let statusClass = "";
+                    let isDisabled = uAns !== undefined ? "disabled" : "";
+                    if (uAns !== undefined) {
+                        if (optIdx === q.ans) statusClass = "correct";
+                        else if (uAns === optIdx) statusClass = "wrong";
+                    }
+                    html += `<button class="option-btn ${statusClass}" ${isDisabled} onclick="handleMCQ(${currentSection}, ${qIdx}, ${optIdx}, ${q.ans})">${opt}</button>`;
+                });
+                html += `</div>`;
+            } 
+            else if (q.type === 3) {
+                // Fill Blank
+                let selectHtml = `<select class="fill-select" id="sel_${answerKey}" onchange="handleFill(${currentSection}, ${qIdx}, this, ${q.ans})" ${uAns !== undefined ? 'disabled' : ''}>
+                    <option value="" disabled selected>اِخْتَارِي...</option>`;
+                sec.fillWords.forEach((w, i) => { selectHtml += `<option value="${i}">${w}</option>`; });
+                selectHtml += `</select>`;
+                
+                if (uAns === undefined) {
+                    html += `<div class="question-text">${qIdx + 1}. ` + q.q.replace("_____", selectHtml) + `</div>`;
+                } else {
+                    let isCorrect = uAns === q.ans;
+                    let color = isCorrect ? 'var(--correct)' : 'var(--wrong)';
+                    let word = sec.fillWords[uAns];
+                    html += `<div class="question-text">${qIdx + 1}. ` + q.q.replace("_____", `<span style="background:${color}; padding:2px 8px; border-radius:5px;">${word}</span>`) + `</div>`;
+                }
+            }
+            else if (q.type === 4) {
+                // Order
+                html += `<div class="question-text">${qIdx + 1}. رَتِّبِي:</div>`;
+                if (uAns === undefined) {
+                    if (!activeOrders[answerKey]) activeOrders[answerKey] = shuffle([...q.q]);
+                    
+                    html += `<div class="drop-box" id="drop_${answerKey}"></div>`;
+                    html += `<div class="order-area" id="area_${answerKey}">`;
+                    activeOrders[answerKey].forEach((w, i) => {
+                        html += `<button class="word-btn" id="wb_${answerKey}_${i}" onclick="moveWord('${answerKey}', '${w}', ${i})">${w}</button>`;
+                    });
+                    html += `</div>`;
+                    html += `<button class="check-btn" onclick="checkOrder('${answerKey}', '${q.ans}')">تَحَقُّق (Проверить)</button>`;
+                } else {
+                    let color = uAns === true ? 'var(--correct)' : 'var(--wrong)';
+                    let text = uAns === true ? q.ans : `<del>${userAnswers[answerKey+'_wrongtext']}</del> <br> <span style="color:#155724; font-size:0.9em">الصَّوَابُ: ${q.ans}</span>`;
+                    html += `<div class="drop-box" style="background:${color}; display:block;">${text}</div>`;
+                }
+            }
+            else if (q.type === 5) {
+                // Textarea
+                html += `<div class="question-text">${qIdx + 1}. ${q.q}</div>`;
+                let val = uAns || "";
+                html += `<textarea class="textarea-box" onblur="handleText('${answerKey}', this.value)" placeholder="اُكْتُبِي هُنَا...">${val}</textarea>`;
+            }
+            
+            html += `</div>`;
+        });
+
+        document.getElementById('sectionContainer').innerHTML = html;
+        document.getElementById('progress').innerText = `الْقِسْمُ ${currentSection + 1} مِنْ ${sectionsData.length}`;
+        document.getElementById('prevBtn').disabled = currentSection === 0;
+        
+        let nextBtn = document.getElementById('nextBtn');
+        if (currentSection === sectionsData.length - 1) {
+            nextBtn.innerText = "إِنْهَاء الِاخْتِبَارِ";
+            nextBtn.style.backgroundColor = "#27ae60";
+        } else {
+            nextBtn.innerText = "الْقِسْمُ التَّالِي";
+            nextBtn.style.backgroundColor = "var(--primary)";
+        }
+        
+        window.scrollTo(0,0);
+    }
+
+    function handleMCQ(sIdx, qIdx, chosen, correct) {
+        userAnswers[`s${sIdx}_q${qIdx}`] = chosen;
+        if (chosen === correct) score++;
+        renderSection(); // Re-render to show colors and disable
+    }
+
+    function handleFill(sIdx, qIdx, sel, correct) {
+        let val = parseInt(sel.value);
+        let key = `s${sIdx}_q${qIdx}`;
+        if (val === correct) {
+            sel.style.backgroundColor = 'var(--correct)';
+            userAnswers[key] = val;
+            score++;
+            setTimeout(renderSection, 600);
+        } else {
+            sel.style.backgroundColor = 'var(--wrong)';
+            setTimeout(() => { sel.style.backgroundColor = '#fff'; sel.value = ""; }, 1000);
+        }
+    }
+
+    // State for ordering logic
+    let userOrderArrays = {}; 
+    
+    function moveWord(key, w, i) {
+        if (!userOrderArrays[key]) userOrderArrays[key] = [];
+        userOrderArrays[key].push(w);
+        document.getElementById(`wb_${key}_${i}`).style.display = 'none';
+        let dropBox = document.getElementById(`drop_${key}`);
+        dropBox.innerHTML += `<button class="word-btn" style="background:#7f8c8d" onclick="revertWord('${key}', '${w}', ${i}, this)">${w}</button>`;
+    }
+    
+    function revertWord(key, w, i, el) {
+        userOrderArrays[key] = userOrderArrays[key].filter(word => word !== w);
+        el.remove();
+        document.getElementById(`wb_${key}_${i}`).style.display = 'inline-block';
+    }
+
+    function checkOrder(key, correctStr) {
+        if (!userOrderArrays[key] || userOrderArrays[key].length === 0) return;
+        let userStr = userOrderArrays[key].join(" ");
+        let dropBox = document.getElementById(`drop_${key}`);
+        
+        if (userStr === correctStr) {
+            dropBox.style.backgroundColor = 'var(--correct)';
+            userAnswers[key] = true;
+            score++;
+            setTimeout(renderSection, 600);
+        } else {
+            dropBox.style.backgroundColor = 'var(--wrong)';
+            setTimeout(() => {
+                // allow retry by resetting
+                dropBox.style.backgroundColor = '#fafafa';
+                dropBox.innerHTML = '';
+                userOrderArrays[key] = [];
+                renderSection();
+            }, 1000);
+        }
+    }
+
+    function handleText(key, val) {
+        userAnswers[key] = val;
+    }
+
+    function navigate(dir) {
+        // Soft validation can be added here if needed, currently allows moving forward
+        currentSection += dir;
+        renderSection();
+    }
+
+    function showFinalResult() {
+        document.getElementById('sectionContainer').style.display = 'none';
+        document.getElementById('navArea').style.display = 'none';
+        document.getElementById('header').style.display = 'none';
+        
+        let res = document.getElementById('resultBox');
+        res.style.display = 'block';
+        res.innerHTML = `
+            <h2>تَمَّ إِنْهَاءُ الِاخْتِبَارِ بِنَجَاحٍ!</h2>
+            <div class="ru-text">Тест успешно завершен!</div>
+            <div class="result-score">${score} / 95</div>
+            <p>هَذِهِ هِيَ النَّتِيجَةُ الْآلِيَّةُ لِلْأَسْئِلَةِ الْمَوْضُوعِيَّةِ.</p>
+            <p style="color:#e67e22; font-size:0.9em; margin-top:15px;">* الْقِسْمُ الْأَخِيرُ (15 دَرَجَةً) يُقَيِّمُهُ الْمُعَلِّمُ يَدَوِيًّا حَسَبَ تَعْبِيرِكِ.</p>
+            <button class="nav-btn" style="margin-top:30px;" onclick="location.reload()">إِعَادَةُ الِاخْتِبَارِ</button>
+        `;
+    }
+
+    function shuffle(array) {
+        let currentIndex = array.length, randomIndex;
+        while (currentIndex !== 0) {
+            randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex--;
+            [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+        }
+        return array;
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>
